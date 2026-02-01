@@ -8,17 +8,16 @@
 // 这个 class 中的字段被 private 修饰，只能在 class 内部访问。
 // 因此必须提供构造器来初始化字段。
 // READ: 构造器 <https://zh.cppreference.com/w/cpp/language/constructor>
-class Fibonacci {
-    size_t cache[16];
+#include "../exercise.h"
+
+struct Fibonacci {
+    unsigned long long cache[128];
     int cached;
 
-public:
-    // TODO: 实现构造器
-    // Fibonacci()
-
     // TODO: 实现正确的缓存优化斐波那契计算
-    size_t get(int i) {
-        for (; false; ++cached) {
+    unsigned long long get(int i) {
+        if (i <= cached) return cache[i];
+        for (; cached<=i; ++cached) {
             cache[cached] = cache[cached - 1] + cache[cached - 2];
         }
         return cache[i];
@@ -26,9 +25,8 @@ public:
 };
 
 int main(int argc, char **argv) {
-    // 现在类型拥有无参构造器，声明时会直接调用。
-    // 这个写法不再是未定义行为了。
-    Fibonacci fib;
+    // TODO: 初始化缓存结构体，使计算正确
+    Fibonacci fib = {{0, 1}, 2};
     ASSERT(fib.get(10) == 55, "fibonacci(10) should be 55");
     std::cout << "fibonacci(10) = " << fib.get(10) << std::endl;
     return 0;

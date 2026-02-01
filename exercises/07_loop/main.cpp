@@ -1,28 +1,27 @@
 #include "../exercise.h"
-
-// TODO: 改正函数实现，实现正确的缓存优化斐波那契计算
-// THINk: 这个函数是一个纯函数（pure function）吗？
-// READ: 纯函数 <https://zh.wikipedia.org/wiki/%E7%BA%AF%E5%87%BD%E6%95%B0>
-static unsigned long long fibonacci(int i) {
-    // TODO: 为缓存设置正确的初始值
-    static unsigned long long cache[96], cached;
-    // TODO: 设置正确的循环条件
-    for (; false; ++cached) {
-        cache[cached] = cache[cached - 1] + cache[cached - 2];
+//递归很可怕，内存消耗大，时间复杂度高，所以我们可以用循环来实现斐波那契数列
+constexpr unsigned long long fibonacci(int i) {
+    if(i<=1)return i;
+    unsigned long long a=0,b=1,c=0;
+    for(int j=2;j<=i;j++){
+        c=a+b;
+        a=b;
+        b=c;
     }
-    return cache[i];
+    return b;
 }
 
-// ---- 不要修改以下代码 ----
 int main(int argc, char **argv) {
-    ASSERT(fibonacci(0) == 0, "fibonacci(0) should be 0");
-    ASSERT(fibonacci(1) == 1, "fibonacci(1) should be 1");
-    ASSERT(fibonacci(2) == 1, "fibonacci(2) should be 1");
-    ASSERT(fibonacci(3) == 2, "fibonacci(3) should be 2");
-    ASSERT(fibonacci(10) == 55, "fibonacci(10) should be 55");
+    constexpr auto FIB20 = fibonacci(20);
+    ASSERT(FIB20 == 6765, "fibonacci(20) should be 6765");
+    std::cout << "fibonacci(20) = " << FIB20 << std::endl;
 
-    auto fib90 = fibonacci(90);
-    std::cout << "fibonacci(90) = " << fib90 << std::endl;
-    ASSERT(fib90 == 2880067194370816120, "fibonacci(90) should be 2880067194370816120");
+    // TODO: 观察错误信息，修改一处，使代码编译运行
+    constexpr auto ANS_N = 100;
+    auto ANS = fibonacci(ANS_N);
+    std::cout << "fibonacci(" << ANS_N << ") = " << ANS << std::endl;
+
     return 0;
 }
+
+

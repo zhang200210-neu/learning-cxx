@@ -1,4 +1,4 @@
-﻿#include "../exercise.h"
+#include "../exercise.h"
 #include <cstring>
 // READ: 类模板 <https://zh.cppreference.com/w/cpp/language/class_template>
 
@@ -10,6 +10,10 @@ struct Tensor4D {
     Tensor4D(unsigned int const shape_[4], T const *data_) {
         unsigned int size = 1;
         // TODO: 填入正确的 shape 并计算 size
+        for (int i = 0; i < 4; ++i) {
+            shape[i] = shape_[i];
+            size *= shape[i];
+        }
         data = new T[size];
         std::memcpy(data, data_, size * sizeof(T));
     }
@@ -28,6 +32,56 @@ struct Tensor4D {
     // 则 `this` 与 `others` 相加时，3 个形状为 `[1, 2, 1, 4]` 的子张量各自与 `others` 对应项相加。
     Tensor4D &operator+=(Tensor4D const &others) {
         // TODO: 实现单向广播的加法
+        // 计算广播后的步长
+        unsigned int strides_this[4];
+        unsigned int strides_others[4];
+        
+        // 计算原始步长（用于索引计算）
+        strides_this[3] = 1;
+        strides_others[3] = 1;
+        for (int i = 2; i >= 0; --i) {
+            strides_this[i] = strides_this[i + 1] * shape[i + 1];
+            strides_others[i] = strides_others[i + 1] * others.shape[i + 1];
+        }
+        
+        // 计算总元素数量
+        unsigned int total_elements = shape[0] * shape[1] * shape[2] * shape[3];
+        
+        // 遍历所有元素
+        for (unsigned int idx = 0; idx < total_elements; ++idx) {
+            // 将一维索引转换为四维索引
+            unsigned int indices[4];
+            unsigned int temp = idx;
+            
+            indices[3] = temp % shape[3];
+            temp /= shape[3];
+            indices[2] = temp % shape[2];
+            temp /= shape[2];
+            indices[1] = temp % shape[1];
+            indices[0] = temp / shape[1];
+            
+            // 计算 others 中对应的索引（考虑广播）
+            unsigned int other_indices[4];
+            for (int i = 0; i < 4; ++i) {
+                if (others.shape[i] == 1) {
+                    // 如果维度长度为1，总是使用索引0（广播）
+                    other_indices[i] = 0;
+                } else {
+                    // 否则使用相同的索引
+                    other_indices[i] = indices[i];
+                }
+            }
+            
+            // 计算 others 中的一维索引
+            unsigned int other_idx = 0;
+            for (int i = 0; i < 4; ++i) {
+                other_idx += other_indices[i] * strides_others[i];
+            }
+            
+            // 执行加法
+            data[idx] += others.data[other_idx];
+        }
+        
         return *this;
     }
 };

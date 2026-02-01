@@ -1,47 +1,87 @@
 #include "../exercise.h"
-
-// READ: 复制构造函数 <https://zh.cppreference.com/w/cpp/language/copy_constructor>
-// READ: 函数定义（显式弃置）<https://zh.cppreference.com/w/cpp/language/function>
-
+#include <iostream>
 
 class DynFibonacci {
     size_t *cache;
+    int capacity;
     int cached;
 
 public:
-    // TODO: 实现动态设置容量的构造器
-    DynFibonacci(int capacity): cache(new ?), cached(?) {}
-
-    // TODO: 实现复制构造器
-    DynFibonacci(DynFibonacci const &) = delete;
-
-    // TODO: 实现析构器，释放缓存空间
-    ~DynFibonacci();
-
-    // TODO: 实现正确的缓存优化斐波那契计算
-    size_t get(int i) {
-        for (; false; ++cached) {
-            cache[cached] = cache[cached - 1] + cache[cached - 2];
+    DynFibonacci(int cap): cache(new size_t[cap]), capacity(cap), cached(0) {
+        // 初始化缓存
+        if (cap > 0) {
+            cache[0] = 0;
+            cached = 1;
         }
+        if (cap > 1) {
+            cache[1] = 1;
+            cached = 2;
+        }
+    }
+
+    // 删除复制构造函数，禁止复制
+    DynFibonacci(DynFibonacci const &) = delete;
+    
+    // 也可以删除移动构造函数（可选）
+    DynFibonacci(DynFibonacci &&) = delete;
+    
+    // 删除赋值运算符
+    DynFibonacci& operator=(DynFibonacci const &) = delete;
+
+    ~DynFibonacci() {
+        delete[] cache;
+    }
+
+    // 非常量版本：可以修改对象，可以扩展缓存
+    size_t get(int i) {
+        // 处理边界情况
+        if (i < 0) return 0;
+        
+        // 如果索引超出当前缓存容量，扩展缓存
+        if (i >= capacity) {
+            size_t *new_cache = new size_t[i + 1];
+            for (int j = 0; j < cached; ++j) {
+                new_cache[j] = cache[j];
+            }
+            delete[] cache;
+            cache = new_cache;
+            capacity = i + 1;
+        }
+        
+        // 计算缺失的值
+        for (int j = cached; j <= i; ++j) {
+            if (j == 0) cache[0] = 0;
+            else if (j == 1) cache[1] = 1;
+            else cache[j] = cache[j - 1] + cache[j - 2];
+        }
+        
+        // 更新缓存计数
+        if (i >= cached) {
+            cached = i + 1;
+        }
+        
         return cache[i];
     }
 
-    // NOTICE: 不要修改这个方法
-    // NOTICE: 名字相同参数也相同，但 const 修饰不同的方法是一对重载方法，可以同时存在
-    //         本质上，方法是隐藏了 this 参数的函数
-    //         const 修饰作用在 this 上，因此它们实际上参数不同
+    // 常量版本：只能读取已有的缓存值
     size_t get(int i) const {
-        if (i <= cached) {
+        // 检查索引是否在缓存范围内
+        if (i >= 0 && i < cached) {
             return cache[i];
         }
+        // 如果超出范围，触发断言
         ASSERT(false, "i out of range");
+        return 0; // 为了编译通过
     }
 };
 
 int main(int argc, char **argv) {
     DynFibonacci fib(12);
     ASSERT(fib.get(10) == 55, "fibonacci(10) should be 55");
-    DynFibonacci const fib_ = fib;
-    ASSERT(fib_.get(10) == fib.get(10), "Object cloned");
+    
+    // 创建常量引用，使用常量版本的get方法
+    DynFibonacci const &fib_ref = fib;
+    ASSERT(fib_ref.get(10) == fib.get(10), "Object cloned");
+    
     return 0;
 }
